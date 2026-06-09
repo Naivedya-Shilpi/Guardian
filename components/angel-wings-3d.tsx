@@ -76,9 +76,9 @@ function Wing({
       <mesh position={[direction * 0.5, 0, 0]}>
         <sphereGeometry args={[0.3, 16, 16]} />
         <meshStandardMaterial
-          color="#ffffff"
-          emissive="#ffffff"
-          emissiveIntensity={0.5}
+          color="#ffd700"
+          emissive="#ffaa00"
+          emissiveIntensity={0.6}
           transparent
           opacity={0.3}
         />
@@ -102,11 +102,13 @@ function Feather({
 }) {
   const meshRef = useRef<THREE.Mesh>(null)
   const timeOffset = index * 0.3
+  const timeRef = useRef(0) // <-- ADDED THIS
   
-  useFrame((state) => {
+  useFrame((_, delta) => { // <-- GRABBING DELTA INSTEAD OF STATE
     if (!meshRef.current) return
-    const time = state.clock.elapsedTime
-    const wave = Math.sin(time * 2 + timeOffset) * 0.05
+    timeRef.current += delta // <-- ADDING TIME MANUALLY
+    
+    const wave = Math.sin(timeRef.current * 2 + timeOffset) * 0.05
     meshRef.current.rotation.z = rotation[2] + wave * (side === "left" ? 1 : -1)
   })
 
@@ -128,14 +130,14 @@ function Feather({
     <mesh ref={meshRef} position={position} rotation={rotation}>
       <shapeGeometry args={[featherShape]} />
       <meshStandardMaterial
-        color="#e8e8e8"
-        emissive="#ffffff"
-        emissiveIntensity={0.4 + (index * 0.05)}
+        color="#ffd700"       // Rich Gold base color
+        emissive="#ffaa00"    // Warm Golden glow
+        emissiveIntensity={0.5 + (index * 0.05)}
         side={THREE.DoubleSide}
         transparent
         opacity={0.9}
-        metalness={0.8}
-        roughness={0.2}
+        metalness={0.9}       // Cranked up the metalness for that shiny look
+        roughness={0.15}      // Smoothed the roughness to reflect light better
       />
     </mesh>
   )
@@ -143,37 +145,43 @@ function Feather({
 
 function GlowOrbs() {
   const groupRef = useRef<THREE.Group>(null)
+  const timeRef = useRef(0) // <-- ADDED THIS
   
-  useFrame((state) => {
+  const orbs = useMemo(() => {
+    return [...Array(8)].map((_, i) => ({
+      angle: (i / 8) * Math.PI * 2,
+      radius: 3 + Math.random() * 1,
+      size: 0.05 + Math.random() * 0.05
+    }))
+  }, [])
+
+  useFrame((_, delta) => { // <-- GRABBING DELTA
     if (!groupRef.current) return
-    groupRef.current.rotation.y = state.clock.elapsedTime * 0.1
+    timeRef.current += delta // <-- ADDING TIME MANUALLY
+    groupRef.current.rotation.y = timeRef.current * 0.1
   })
 
   return (
     <group ref={groupRef}>
-      {[...Array(8)].map((_, i) => {
-        const angle = (i / 8) * Math.PI * 2
-        const radius = 3 + Math.random() * 1
-        return (
-          <mesh 
-            key={i} 
-            position={[
-              Math.cos(angle) * radius,
-              Math.sin(i * 0.5) * 0.5,
-              Math.sin(angle) * radius
-            ]}
-          >
-            <sphereGeometry args={[0.05 + Math.random() * 0.05, 8, 8]} />
-            <meshStandardMaterial
-              color="#ffffff"
-              emissive="#ffffff"
-              emissiveIntensity={2}
-              transparent
-              opacity={0.6}
-            />
-          </mesh>
-        )
-      })}
+      {orbs.map((orb, i) => (
+        <mesh 
+          key={i} 
+          position={[
+            Math.cos(orb.angle) * orb.radius,
+            Math.sin(i * 0.5) * 0.5,
+            Math.sin(orb.angle) * orb.radius
+          ]}
+        >
+          <sphereGeometry args={[orb.size, 8, 8]} />
+          <meshStandardMaterial
+            color="#ffffff"
+            emissive="#ffffff"
+            emissiveIntensity={2}
+            transparent
+            opacity={0.6}
+          />
+        </mesh>
+      ))}
     </group>
   )
 }
@@ -218,14 +226,14 @@ function Scene({ mousePos }: { mousePos: React.MutableRefObject<{ x: number; y: 
         floatIntensity={0.3}
       >
         <group scale={scale * 1.8}>
-          <BackgroundGlow />
+          {/* <BackgroundGlow /> */}
           <Wing side="left" mousePos={mousePos} />
           <Wing side="right" mousePos={mousePos} />
           <GlowOrbs />
         </group>
       </Float>
       
-      <Environment preset="night" />
+      {/* <Environment preset="night" /> */}
     </>
   )
 }
