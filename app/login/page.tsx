@@ -57,11 +57,12 @@ export default function LoginPage() {
         if (response.ok) {
           setStatusMsg(`🔓 Access Granted. Welcome, ${data.operator.name}.`)
           
-          // Wait 1.5 seconds so they can see the success message, then route them away
-          setTimeout(() => {
-            router.push('/') // Change this later when you build a real dashboard page
-          }, 1500)
+          // FIX: Save the operator identity to the browser's secure memory
+          localStorage.setItem('guardian_operator', JSON.stringify(data.operator))
           
+          setTimeout(() => {
+            router.push('/') 
+          }, 1500)
         } else {
           setStatusMsg(`❌ Access Denied: ${data.error}`)
         }

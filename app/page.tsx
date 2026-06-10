@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import { motion } from "framer-motion"
 import { ParticleField } from "@/components/particle-field"
@@ -10,7 +11,7 @@ import { AboutSection } from "@/components/about-section"
 import { CTASection } from "@/components/cta-section"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
-import { ChevronDown } from "lucide-react"
+import { ChevronDown, MonitorSmartphone, Globe, Download } from "lucide-react"
 
 const AngelWings3D = dynamic(
   () => import("@/components/angel-wings-3d").then(mod => ({ default: mod.AngelWings3D })),
@@ -18,12 +19,24 @@ const AngelWings3D = dynamic(
 )
 
 export default function Home() {
+  const [operator, setOperator] = useState<{name: string, email: string} | null>(null)
+
+  // On mount, check if the user is logged in
+  useEffect(() => {
+    const savedOperator = localStorage.getItem('guardian_operator')
+    if (savedOperator) {
+      setOperator(JSON.parse(savedOperator))
+    }
+  }, [])
+
   return (
     <main className="min-h-screen bg-background cyber-grid">
-      <Navbar />
+      {/* Pass the operator state to the Navbar so it can switch to Logout mode */}
+      <Navbar operator={operator} setOperator={setOperator} />
+      
       <ParticleField />
 
-      {/* Hero Section with 3D Wings */}
+      {/* --- HERO SECTION WITH 3D WINGS (Always Visible) --- */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         {/* Background glow effect */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -58,19 +71,70 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* Content Sections */}
-      <div id="features">
-        <StatsSection />
-        <FeaturesSection />
-      </div>
-      
-      <div id="about">
-        <AboutSection />
-      </div>
-      
-      <div id="contact">
-        <CTASection />
-      </div>
+      {/* --- CONDITIONAL BOTTOM CONTENT --- */}
+      {!operator ? (
+        
+        // PUBLIC VIEW: The standard landing page sections
+        <>
+          <div id="features">
+            <StatsSection />
+            <FeaturesSection />
+          </div>
+          <div id="about">
+            <AboutSection />
+          </div>
+          <div id="contact">
+            <CTASection />
+          </div>
+        </>
+
+      ) : (
+
+        // AUTHENTICATED VIEW: The Dashboard Compartments
+        <div className="relative z-20 max-w-6xl mx-auto px-6 py-24 pb-32">
+          <motion.div 
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="grid grid-cols-1 md:grid-cols-2 gap-8"
+          >
+            {/* COMPARTMENT 1: Device Scanner */}
+            <div className="group relative p-8 rounded-3xl bg-black/60 border border-primary/20 backdrop-blur-xl overflow-hidden hover:border-primary/50 transition-all duration-500">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              
+              <div className="relative z-10 flex flex-col h-full">
+                <MonitorSmartphone className="w-12 h-12 text-primary mb-6" />
+                <h2 className="text-2xl font-bold text-white mb-3">Scan Local Device</h2>
+                <p className="text-muted-foreground text-sm mb-8 flex-grow">
+                  Deploy the Guardian executable to your local hardware. It will scrape installed software, cross-reference the NVD, and report deep-level CVEs directly back to this command center.
+                </p>
+                
+                <button className="flex items-center justify-center gap-3 w-full bg-primary text-primary-foreground py-4 rounded-xl font-semibold tracking-wide hover:bg-primary/90 transition-all shadow-[0_0_20px_rgba(255,0,0,0.2)] group-hover:shadow-[0_0_30px_rgba(255,0,0,0.4)]">
+                  <Download className="w-5 h-5" />
+                  Download Agent (v1.0.exe)
+                </button>
+              </div>
+            </div>
+
+            {/* COMPARTMENT 2: Website Scanner */}
+            <div className="group relative p-8 rounded-3xl bg-black/40 border border-white/5 backdrop-blur-xl overflow-hidden opacity-70 hover:opacity-100 transition-all duration-500">
+              <div className="relative z-10 flex flex-col h-full">
+                <Globe className="w-12 h-12 text-muted-foreground group-hover:text-white transition-colors mb-6" />
+                <h2 className="text-2xl font-bold text-white mb-3">Scan Target URL</h2>
+                <p className="text-muted-foreground text-sm mb-8 flex-grow">
+                  Initiate a remote reconnaissance scan against a target domain. Analyzes headers, open ports, and surface-level vulnerabilities.
+                </p>
+                
+                <button 
+                  disabled
+                  className="flex items-center justify-center gap-3 w-full bg-white/5 text-muted-foreground py-4 rounded-xl font-semibold tracking-wide border border-white/10 cursor-not-allowed"
+                >
+                  Module Locked (Coming Soon)
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       <Footer />
     </main>
