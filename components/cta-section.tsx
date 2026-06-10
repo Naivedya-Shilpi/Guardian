@@ -3,8 +3,8 @@
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
+import { useRouter } from "next/navigation"
 
-// Custom SVG to replace the removed Lucide Github icon
 const GithubIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -24,6 +24,8 @@ const GithubIcon = (props: React.SVGProps<SVGSVGElement>) => (
 )
 
 export function CTASection() {
+  const router = useRouter();
+
   return (
     <section className="py-24 px-4 relative">
       <div className="max-w-4xl mx-auto text-center">
@@ -42,10 +44,13 @@ export function CTASection() {
             of cyber security innovation.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          {/* FIX: Changed to flex-row flex-wrap so it doesn't stack vertically and stretch */}
+          <div className="flex flex-row flex-wrap gap-4 justify-center">
+            {/* FIX: Stripped out w-full sm:w-auto so it perfectly hugs the text */}
             <Button 
               size="lg" 
               className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 group"
+              onClick={() => router.push('/login')}
             >
               Get Started
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

@@ -13,3 +13,7 @@ __v0_jsx-dev-runtime.ts
 node_modules
 .next/
 .DS_Store
+
+# Secure Backend Vault
+scanner-backend/node_modules/
+scanner-backend/users.json
