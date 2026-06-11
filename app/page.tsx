@@ -11,7 +11,7 @@ import { AboutSection } from "@/components/about-section"
 import { CTASection } from "@/components/cta-section"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
-import { ChevronDown, MonitorSmartphone, Globe, Download } from "lucide-react"
+import { ChevronDown, MonitorSmartphone, Globe, Download, RefreshCw } from "lucide-react"
 
 const AngelWings3D = dynamic(
   () => import("@/components/angel-wings-3d").then(mod => ({ default: mod.AngelWings3D })),
@@ -20,6 +20,23 @@ const AngelWings3D = dynamic(
 
 export default function Home() {
   const [operator, setOperator] = useState<{name: string, email: string} | null>(null)
+  
+  // NEW STATES FOR SCAN DATA
+  const [scanData, setScanData] = useState<any>(null)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  // FUNCTION TO FETCH FROM BACKEND
+  const fetchReports = async () => {
+    setIsRefreshing(true)
+    try {
+      const res = await fetch('http://localhost:3000/api/reports')
+      const json = await res.json()
+      if (json.data) setScanData(json.data)
+    } catch (error) {
+      console.error("Error fetching intelligence:", error)
+    }
+    setTimeout(() => setIsRefreshing(false), 500) // little delay for visual feedback
+  }
 
   // On mount, check if the user is logged in
   useEffect(() => {
@@ -108,10 +125,14 @@ export default function Home() {
                   Deploy the Guardian executable to your local hardware. It will scrape installed software, cross-reference the NVD, and report deep-level CVEs directly back to this command center.
                 </p>
                 
-                <button className="flex items-center justify-center gap-3 w-full bg-primary text-primary-foreground py-4 rounded-xl font-semibold tracking-wide hover:bg-primary/90 transition-all shadow-[0_0_20px_rgba(255,0,0,0.2)] group-hover:shadow-[0_0_30px_rgba(255,0,0,0.4)]">
-                  <Download className="w-5 h-5" />
-                  Download Agent (v1.0.exe)
-                </button>
+                <a 
+  href="/agent.exe" 
+  download="Guardian-Agent-v1.0.exe"
+  className="flex items-center justify-center gap-3 w-full bg-primary text-primary-foreground py-4 rounded-xl font-semibold tracking-wide hover:bg-primary/90 transition-all shadow-[0_0_20px_rgba(255,0,0,0.2)] group-hover:shadow-[0_0_30px_rgba(255,0,0,0.4)]"
+>
+  <Download className="w-5 h-5" />
+  Download Agent (v1.0.exe)
+</a>
               </div>
             </div>
 
@@ -133,6 +154,78 @@ export default function Home() {
               </div>
             </div>
           </motion.div>
+          {/* --- LIVE INTELLIGENCE FEED --- */}
+          <div className="mt-16 relative z-20">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                Live Intelligence Feed
+              </h2>
+              <button 
+                onClick={fetchReports} 
+                disabled={isRefreshing}
+                className="flex items-center gap-2 bg-primary/10 text-primary border border-primary/30 px-4 py-2 rounded-lg hover:bg-primary/20 transition-all disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
+                {isRefreshing ? "Syncing..." : "Sync Database"}
+              </button>
+            </div>
+            
+            {scanData ? (
+              <div className="bg-black/60 border border-primary/20 p-6 md:p-8 rounded-3xl backdrop-blur-xl">
+                <div className="flex flex-col md:flex-row justify-between md:items-center mb-8 border-b border-white/5 pb-4">
+                  <div>
+                    <h3 className="text-xl text-white font-mono tracking-tight">TARGET: {scanData.device}</h3>
+                    <p className="text-muted-foreground text-sm mt-1">
+                      Scanned at: {new Date(scanData.timestamp).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="mt-4 md:mt-0 px-4 py-2 bg-primary/10 border border-primary/20 rounded-lg">
+                    <span className="text-primary font-bold">
+                      {scanData.report.reduce((acc: any, app: any) => acc + app.vulnerabilities_found, 0)} Total CVEs
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  {scanData.report.map((app: any, i: number) => (
+                    <div key={i} className="border border-white/5 p-5 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors">
+                      <div className="flex justify-between items-center mb-3">
+                        <h4 className="font-semibold text-white text-lg">
+                          {app.app_name} <span className="text-muted-foreground text-sm font-normal ml-2">v{app.version}</span>
+                        </h4>
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${app.vulnerabilities_found > 0 ? 'bg-red-500/20 text-red-400 border border-red-500/20' : 'bg-green-500/20 text-green-400 border border-green-500/20'}`}>
+                          {app.vulnerabilities_found} CVEs Found
+                        </span>
+                      </div>
+                      
+                      {app.vulnerabilities_found > 0 ? (
+                        <div className="mt-4 space-y-3">
+                          {app.cves.map((cve: any, j: number) => (
+                            <div key={j} className="text-sm border-l-2 border-primary/50 pl-4 py-1">
+                              <strong className="text-primary">{cve.id}</strong> 
+                              <span className="text-muted-foreground ml-2 text-xs border border-white/10 px-2 py-0.5 rounded">CVSS: {cve.severity}</span>
+                              <p className="text-gray-400 mt-1 line-clamp-2">{cve.description}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-green-400/70 mt-2">No known vulnerabilities detected in current version.</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center p-12 border border-white/5 rounded-3xl bg-black/40 backdrop-blur-md">
+                <MonitorSmartphone className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+                <h3 className="text-white text-lg mb-2">No Target Data Available</h3>
+                <p className="text-muted-foreground text-sm max-w-md mx-auto">
+                  Deploy the agent to a local machine to intercept vulnerability data. Click 'Sync Database' to pull the latest reports.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

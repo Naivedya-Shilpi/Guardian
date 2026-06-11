@@ -12,6 +12,7 @@ app.use(express.json({ limit: '10mb' }));
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const USERS_DB = './users.json'; // Our local mock database
+let latestScanReport = null; // Temporarily holding the latest intel in memory
 
 // --- NEW: THE AUTHENTICATION ENGINE ---
 
@@ -151,12 +152,22 @@ app.post('/api/scan', async (req, res) => {
 
     console.log(`\n🔥 Payload received from: ${metadata.hostname}`);
     const vulnerabilitiesReport = await checkVulnerabilities(software);
+    latestScanReport = {
+        device: metadata.hostname,
+        timestamp: new Date().toISOString(),
+        report: vulnerabilitiesReport
+    };
 
     res.status(200).json({
         status: "Scan completed",
         device: metadata.hostname,
         report: vulnerabilitiesReport
     });
+});
+
+// Endpoint for the Next.js frontend to fetch the latest report
+app.get('/api/reports', (req, res) => {
+    res.json({ data: latestScanReport });
 });
 
 app.listen(port, () => {
