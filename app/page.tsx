@@ -154,12 +154,12 @@ export default function Home() {
               </div>
             </div>
           </motion.div>
-          {/* --- LIVE INTELLIGENCE FEED --- */}
+          {/* --- MINIMALIST LIVE INTELLIGENCE FEED --- */}
           <div className="mt-16 relative z-20">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                Live Intelligence Feed
+                Security Scan Results
               </h2>
               <button 
                 onClick={fetchReports} 
@@ -167,61 +167,97 @@ export default function Home() {
                 className="flex items-center gap-2 bg-primary/10 text-primary border border-primary/30 px-4 py-2 rounded-lg hover:bg-primary/20 transition-all disabled:opacity-50"
               >
                 <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
-                {isRefreshing ? "Syncing..." : "Sync Database"}
+                {isRefreshing ? "Updating..." : "Refresh Report"}
               </button>
             </div>
             
             {scanData ? (
               <div className="bg-black/60 border border-primary/20 p-6 md:p-8 rounded-3xl backdrop-blur-xl">
-                <div className="flex flex-col md:flex-row justify-between md:items-center mb-8 border-b border-white/5 pb-4">
-                  <div>
-                    <h3 className="text-xl text-white font-mono tracking-tight">TARGET: {scanData.device}</h3>
-                    <p className="text-muted-foreground text-sm mt-1">
-                      Scanned at: {new Date(scanData.timestamp).toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="mt-4 md:mt-0 px-4 py-2 bg-primary/10 border border-primary/20 rounded-lg">
-                    <span className="text-primary font-bold">
-                      {scanData.report.reduce((acc: any, app: any) => acc + app.vulnerabilities_found, 0)} Total CVEs
-                    </span>
-                  </div>
-                </div>
                 
-                <div className="space-y-4">
-                  {scanData.report.map((app: any, i: number) => (
-                    <div key={i} className="border border-white/5 p-5 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors">
-                      <div className="flex justify-between items-center mb-3">
-                        <h4 className="font-semibold text-white text-lg">
-                          {app.app_name} <span className="text-muted-foreground text-sm font-normal ml-2">v{app.version}</span>
-                        </h4>
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${app.vulnerabilities_found > 0 ? 'bg-red-500/20 text-red-400 border border-red-500/20' : 'bg-green-500/20 text-green-400 border border-green-500/20'}`}>
-                          {app.vulnerabilities_found} CVEs Found
-                        </span>
+                {/* Overall Device Health Header - Clean Text */}
+                {(() => {
+                  const totalCves = scanData.report.reduce((acc: any, app: any) => acc + app.vulnerabilities_found, 0);
+                  const isThreatened = totalCves > 0;
+                  return (
+                    <div className="flex flex-col md:flex-row justify-between md:items-center mb-8 border-b border-white/5 pb-6">
+                      <div>
+                        <span className="text-xs font-bold tracking-widest text-primary uppercase font-mono">System Intel</span>
+                        <h3 className="text-2xl text-white font-bold mt-1">Device: {scanData.device}</h3>
+                        <p className="text-muted-foreground text-sm mt-1">
+                          Last checked: {new Date(scanData.timestamp).toLocaleString()}
+                        </p>
                       </div>
-                      
-                      {app.vulnerabilities_found > 0 ? (
-                        <div className="mt-4 space-y-3">
-                          {app.cves.map((cve: any, j: number) => (
-                            <div key={j} className="text-sm border-l-2 border-primary/50 pl-4 py-1">
-                              <strong className="text-primary">{cve.id}</strong> 
-                              <span className="text-muted-foreground ml-2 text-xs border border-white/10 px-2 py-0.5 rounded">CVSS: {cve.severity}</span>
-                              <p className="text-gray-400 mt-1 line-clamp-2">{cve.description}</p>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-green-400/70 mt-2">No known vulnerabilities detected in current version.</p>
-                      )}
+                      <div className="mt-4 md:mt-0 text-center md:text-right">
+                        <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">System Status</p>
+                        <p className={`text-xl font-black mt-0.5 ${isThreatened ? 'text-red-400' : 'text-green-400'}`}>
+                          {isThreatened ? `${totalCves} Security Issues Found` : "Device Fully Secure"}
+                        </p>
+                      </div>
                     </div>
-                  ))}
+                  );
+                })()}
+                
+                {/* Applications List - Text Labels Only, Spaced Out */}
+                <div className="space-y-4">
+                  {scanData.report.map((app: any, i: number) => {
+                    const hasIssues = app.vulnerabilities_found > 0;
+                    
+                    // Helper to get text color based on risk level
+                    const getSeverityLabel = (cves: any[]) => {
+                      if (!cves || cves.length === 0) return null;
+                      const maxScore = Math.max(...cves.map(c => parseFloat(c.severity) || 0));
+                      if (maxScore >= 7.0) return { label: "High Risk", color: "text-red-400" };
+                      return { label: "Medium Risk", color: "text-yellow-400" };
+                    };
+
+                    const severity = getSeverityLabel(app.cves);
+
+                    return (
+                      <div key={i} className={`border p-5 rounded-2xl transition-all ${hasIssues ? 'border-red-500/10 bg-red-500/[0.02] hover:bg-red-500/[0.04]' : 'border-white/5 bg-white/5 hover:bg-white/10'}`}>
+                        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                          <div>
+                            <h4 className="font-bold text-white text-lg">
+                              {app.app_name}
+                            </h4>
+                            <p className="text-xs text-muted-foreground mt-0.5">Installed Version: v{app.version}</p>
+                          </div>
+                          
+                          {/* Plain text labels with explicit margins and padding */}
+                          <div className="flex items-center text-sm font-bold tracking-wide pr-4">
+                            {hasIssues && severity && (
+                              <span className={`${severity.color} mr-6`}>
+                                {severity.label}
+                              </span>
+                            )}
+                            <span className={hasIssues ? 'text-red-400' : 'text-green-400'}>
+                              {hasIssues ? "Update Recommended" : "Good to Go"}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {/* Human-Readable Action Plan */}
+                        {hasIssues && (
+                          <div className="mt-4 pt-4 border-t border-white/5 text-sm text-gray-400">
+                            <div className="flex items-start gap-2 bg-white/5 p-3 rounded-xl border border-white/5">
+                              <span className="text-primary font-bold font-mono">💡 Action Plan:</span>
+                              <p>
+                                Outdated software components detected. Hackers could exploit these vulnerabilities to compromise your application data. 
+                                <strong className="text-white block mt-1">Fix: Go to the official website or app store and download the latest update for {app.app_name}.</strong>
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ) : (
               <div className="text-center p-12 border border-white/5 rounded-3xl bg-black/40 backdrop-blur-md">
                 <MonitorSmartphone className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
-                <h3 className="text-white text-lg mb-2">No Target Data Available</h3>
+                <h3 className="text-white text-lg mb-2">Awaiting Target Connection</h3>
                 <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                  Deploy the agent to a local machine to intercept vulnerability data. Click 'Sync Database' to pull the latest reports.
+                  Run the downloaded security agent on your system, then click 'Refresh Report' to see your device's security status.
                 </p>
               </div>
             )}
