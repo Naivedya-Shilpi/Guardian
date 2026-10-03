@@ -408,8 +408,8 @@ def resolve_server_url():
             except Exception:
                 pass
 
-    # 4. Default fallback
-    return "http://localhost:3000"
+    # 4. Default live cloud backend (auto-sync for external users)
+    return "https://guardian-backend-ul7s.onrender.com"
 
 def save_server_url(url):
     try:
