@@ -1,0 +1,11 @@
+# Guardian Cybersecurity Platform - Python Dependencies
+# EDR Agent & Telemetry Scanner
+
+# System & Process Telemetry (agent.py)
+psutil>=5.9.0
+
+# HTTP Networking & Recon (optional enhanced comms)
+requests>=2.31.0
+
+# Binary Compilation & Agent Packaging (agent.spec -> guardian-agent-v1.0.exe)
+pyinstaller>=6.0.0

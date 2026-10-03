@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: guardian-backend
+    env: node
+    plan: free
+    rootDir: scanner-backend
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Set MONGODB_URI in Render Dashboard -> Environment Variables
+      - key: MONGODB_URI
+        sync: false

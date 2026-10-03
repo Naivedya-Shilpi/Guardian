@@ -7,6 +7,8 @@ import Link from "next/link"
 import { useRouter } from "next/navigation" // Added for redirecting
 import { ArrowLeft, Shield, User, Mail, Lock, Eye, EyeOff } from "lucide-react"
 
+import { getApiBaseUrl } from "@/lib/api-config"
+
 export default function LoginPage() {
   const router = useRouter()
   const [isLogin, setIsLogin] = useState(true)
@@ -20,11 +22,12 @@ export default function LoginPage() {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
     setStatusMsg("Processing...")
+    const baseUrl = getApiBaseUrl()
 
     if (!isLogin) {
       // --- REGISTRATION LOGIC ---
       try {
-        const response = await fetch("http://localhost:3000/api/register", {
+        const response = await fetch(`${baseUrl}/api/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, email, password }),
@@ -41,12 +44,12 @@ export default function LoginPage() {
           setStatusMsg(`❌ Error: ${data.error}`)
         }
       } catch (error) {
-        setStatusMsg("❌ Network Error: Connection to backend on port 3000 failed.")
+        setStatusMsg("❌ Network Error: Could not reach Guardian authentication service.")
       }
     } else {
       // --- LOGIN LOGIC ---
       try {
-        const response = await fetch("http://localhost:3000/api/login", {
+        const response = await fetch(`${baseUrl}/api/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),

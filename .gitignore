@@ -7,13 +7,26 @@ __v0_jsx-dev-runtime.ts
 .vercel/
 
 # Environment variables
+.env
+.env.local
 .env*.local
+scanner-backend/.env
+guardian_config.json
 
 # Common ignores
 node_modules
 .next/
 .DS_Store
+tsconfig.tsbuildinfo
 
-# Secure Backend Vault
+# Python build & cache artifacts
+__pycache__/
+*.py[cod]
+build/
+dist/
+*.spec
+
+# Secure Backend Vault & local state
 scanner-backend/node_modules/
 scanner-backend/users.json
+scanner-backend/latest_scan_report.json
